@@ -30,11 +30,6 @@ namespace RoadRemovalTool.Ui
 
         private void ShowModPanel(int index)
         {
-            if (index == 0)
-            {
-                return;
-            }
-
             this.modPanels[this.selectedIndex].isVisible = false;
             this.modPanels[index].isVisible = true;
             this.selectedIndex = index;
@@ -134,7 +129,7 @@ namespace RoadRemovalTool.Ui
                 }
             }
 
-            this.ShowModPanel(this.selectedIndex);
+            this.ShowModPanel(0); //select first element
         }
     }
 }
