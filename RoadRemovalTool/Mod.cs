@@ -14,7 +14,7 @@ namespace RoadRemovalTool
 
         public string Name => "Road Removal Tool";
         public string Description => "Automatically demolishes specific mod roads or replaces them with Colossal Order roads.";
-        public string Version => "1.0.0";
+        public string Version => "1.0.1";
 
         public override void OnCreated(ILoading loading)
         {
