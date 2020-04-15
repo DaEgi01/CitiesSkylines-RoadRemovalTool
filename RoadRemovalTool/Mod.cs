@@ -1,4 +1,5 @@
 ﻿using ColossalFramework;
+using ColossalFramework.PlatformServices;
 using ICities;
 using RoadRemovalTool.Data;
 using RoadRemovalTool.Model;
@@ -37,7 +38,9 @@ namespace RoadRemovalTool
                 var gameEngineService = new GameEngineService(coverageManager, netManager, simulationManager);
 
                 var netInfoGroupsMOM = new NetInfoGroupInitializer_MOM(); //TODO improve MOM support
-                var netInfoGroupsNeExt2 = new NetInfoGroupInitializer_NeExt2();
+                var afterDarkDlcInstalled = SteamHelper.IsDLCOwned(SteamHelper.DLC.AfterDarkDLC);
+                var inMotionDlcInstalled = SteamHelper.IsDLCOwned(SteamHelper.DLC.InMotionDLC);
+                var netInfoGroupsNeExt2 = new NetInfoGroupInitializer_NeExt2(afterDarkDlcInstalled, inMotionDlcInstalled);
                 var netInfoGroupsRoadsForNeExt2 = new NetInfoGroupInitializer_RoadsForNeExt2();
                 //TODO one-way train tracks
                 //TODO Ronyx Highway

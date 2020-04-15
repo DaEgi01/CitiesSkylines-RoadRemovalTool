@@ -3,34 +3,35 @@ using ColossalFramework.Math;
 using RoadRemovalTool.Model;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoadRemovalTool.Services
 {
     public class GameEngineService
     {
-        private readonly CoverageManager coverageManager;
-        private readonly NetManager netManager;
-        private readonly SimulationManager simulationManager;
+        private readonly CoverageManager _coverageManager;
+        private readonly NetManager _netManager;
+        private readonly SimulationManager _simulationManager;
 
         public GameEngineService(CoverageManager coverageManager, NetManager netManager, SimulationManager simulationManager)
         {
-            this.coverageManager = coverageManager ?? throw new ArgumentNullException(nameof(coverageManager));
-            this.netManager = netManager ?? throw new ArgumentNullException(nameof(netManager));
-            this.simulationManager = simulationManager ?? throw new ArgumentNullException(nameof(simulationManager));
+            _coverageManager = coverageManager ?? throw new ArgumentNullException(nameof(coverageManager));
+            _netManager = netManager ?? throw new ArgumentNullException(nameof(netManager));
+            _simulationManager = simulationManager ?? throw new ArgumentNullException(nameof(simulationManager));
         }
 
         public void DemolishSegmentGroup(NetInfoGroupViewReadModel netInfoGroupViewReadModel)
         {
-            this.simulationManager.AddAction(() =>
+            _simulationManager.AddAction(() =>
             {
                 foreach (var netInfoReplacementModel in netInfoGroupViewReadModel.NetInfoReplacementModels)
                 {
-                    this.DemolishNetSegments(netInfoReplacementModel);
+                    DemolishNetSegments(netInfoReplacementModel);
                 }
             });
 
-            coverageManager.CoverageUpdated(ItemClass.Service.None, ItemClass.SubService.None, ItemClass.Level.None);
-            this.netManager.m_nodesUpdated = true;
+            _coverageManager.CoverageUpdated(ItemClass.Service.None, ItemClass.SubService.None, ItemClass.Level.None);
+            _netManager.m_nodesUpdated = true;
 
             DebugOutputPanel.AddMessage(
                 ColossalFramework.Plugins.PluginManager.MessageType.Warning,
@@ -38,13 +39,29 @@ namespace RoadRemovalTool.Services
             );
         }
 
-        public void UpgradeSegmentGroup(NetInfoGroupViewReadModel netInfoGroupViewReadModel)
+        public void ColorizeSegmentGroup(NetInfoGroupViewReadModel netInfoGroupViewReadModel)
         {
-            this.simulationManager.AddAction(() =>
+            _simulationManager.AddAction(() =>
             {
                 foreach (var netInfoReplacementModel in netInfoGroupViewReadModel.NetInfoReplacementModels)
                 {
-                    this.UpgradeNetSegments(netInfoReplacementModel);
+                    ColorizeNetSegments(netInfoReplacementModel);
+                }
+            });
+
+            DebugOutputPanel.AddMessage(
+                ColossalFramework.Plugins.PluginManager.MessageType.Warning,
+                $"Colorization of {netInfoGroupViewReadModel.DisplayNameOriginal} completed."
+            );
+        }
+
+        public void UpgradeSegmentGroup(NetInfoGroupViewReadModel netInfoGroupViewReadModel)
+        {
+            _simulationManager.AddAction(() =>
+            {
+                foreach (var netInfoReplacementModel in netInfoGroupViewReadModel.NetInfoReplacementModels)
+                {
+                    UpgradeNetSegments(netInfoReplacementModel);
                 }
             });
 
@@ -58,12 +75,29 @@ namespace RoadRemovalTool.Services
 
         private void DemolishNetSegments(NetInfoDemolishAndReplacementModel netInfoReplacementModel)
         {
-            var netSegmentIds = this.GetNetSegmentIds(netInfoReplacementModel.SystemNameOriginal);
+            var netSegmentIds = GetNetSegmentIds(netInfoReplacementModel.SystemNameOriginal);
             foreach (var segmentId in netSegmentIds)
             {
-                var segment = netManager.m_segments.m_buffer[segmentId];
+                var segment = _netManager.m_segments.m_buffer[segmentId];
                 segment.Info.m_netAI.ManualDeactivation(segmentId, ref segment);
-                netManager.ReleaseSegment(segmentId, false);
+                _netManager.ReleaseSegment(segmentId, false);
+            }
+        }
+
+        private void ColorizeNetSegments(NetInfoDemolishAndReplacementModel netInfoReplacementModel)
+        {
+            var netSegmentIds = GetNetSegmentIds(netInfoReplacementModel.SystemNameOriginal);
+            foreach (var segmentId in netSegmentIds)
+            {
+                var segment = _netManager.m_segments.m_buffer[segmentId];
+                if (segment.Info == null)
+                {
+                    continue;
+                }
+
+                segment.m_wetness = 0;
+                segment.Info.m_color = new Color(1f, 0f, 1f);
+                _netManager.UpdateSegmentColors(segmentId);
             }
         }
 
@@ -81,15 +115,15 @@ namespace RoadRemovalTool.Services
             }
 
             var randomizer = new Randomizer();
-            var netSegmentIds = this.GetNetSegmentIds(netInfoReplacementModel.SystemNameOriginal);
+            var netSegmentIds = GetNetSegmentIds(netInfoReplacementModel.SystemNameOriginal);
             foreach (var netSegmentId in netSegmentIds)
             {
-                var segment = netManager.m_segments.m_buffer[netSegmentId];
+                var segment = _netManager.m_segments.m_buffer[netSegmentId];
                 segment.Info.m_netAI.ManualDeactivation(netSegmentId, ref segment);
                 var direction = segment.GetDirection(netSegmentId);
 
                 //create a new segment over the old segment
-                netManager.CreateSegment(
+                _netManager.CreateSegment(
                     out ushort newSegmentId,
                     ref randomizer,
                     replacementNetInfo,
@@ -104,7 +138,7 @@ namespace RoadRemovalTool.Services
 
                 //demolish the old segment
                 segment.Info.m_netAI.ManualDeactivation(netSegmentId, ref segment);
-                this.netManager.ReleaseSegment(netSegmentId, false);
+                _netManager.ReleaseSegment(netSegmentId, false);
             }
         }
 
@@ -112,10 +146,10 @@ namespace RoadRemovalTool.Services
         {
             var result = new List<ushort>();
 
-            var bufferLength = (ushort)netManager.m_segments.m_buffer.Length;
+            var bufferLength = (ushort)_netManager.m_segments.m_buffer.Length;
             for (ushort i = 0; i < bufferLength; i++)
             {
-                var segment = netManager.m_segments.m_buffer[i];
+                var segment = _netManager.m_segments.m_buffer[i];
                 if (segment.Info == null)
                 {
                     continue;

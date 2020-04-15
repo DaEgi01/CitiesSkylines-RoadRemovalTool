@@ -11,39 +11,39 @@ namespace RoadRemovalTool.Ui
 {
     public class UiBuilderInGame : IUiBuilder
     {
-        private readonly UIHelperBase uIHelperBase;
-        private readonly ModFullTitle modFullTitle;
-        private readonly GameEngineService gameEngineService;
-        private readonly List<NetInfoGroupViewReadModel> netInfoGroupViewReadModel;
+        private readonly UIHelperBase _uIHelperBase;
+        private readonly ModFullTitle _modFullTitle;
+        private readonly GameEngineService _gameEngineService;
+        private readonly List<NetInfoGroupViewReadModel> _netInfoGroupViewReadModel;
 
-        private int selectedIndex = 0;
-        private UIPanel[] modPanels;
+        private int _selectedIndex = 0;
+        private UIPanel[] _modPanels;
 
         public UiBuilderInGame(UIHelperBase uIHelperBase, ModFullTitle modFullTitle, GameEngineService gameEngineService, List<NetInfoGroupViewReadModel> netInfoGroupReadModel)
         {
-            this.uIHelperBase = uIHelperBase ?? throw new ArgumentNullException(nameof(uIHelperBase));
-            this.modFullTitle = modFullTitle ?? throw new ArgumentNullException(nameof(modFullTitle));
-            this.gameEngineService = gameEngineService ?? throw new ArgumentNullException(nameof(gameEngineService));
+            _uIHelperBase = uIHelperBase ?? throw new ArgumentNullException(nameof(uIHelperBase));
+            _modFullTitle = modFullTitle ?? throw new ArgumentNullException(nameof(modFullTitle));
+            _gameEngineService = gameEngineService ?? throw new ArgumentNullException(nameof(gameEngineService));
             if (netInfoGroupReadModel.Count < 1) throw new ArgumentException(nameof(netInfoGroupReadModel) + " must contain at least one element.");
-            this.netInfoGroupViewReadModel = netInfoGroupReadModel ?? throw new ArgumentNullException(nameof(netInfoGroupReadModel));
+            _netInfoGroupViewReadModel = netInfoGroupReadModel ?? throw new ArgumentNullException(nameof(netInfoGroupReadModel));
         }
 
         private void ShowModPanel(int index)
         {
-            this.modPanels[this.selectedIndex].isVisible = false;
-            this.modPanels[index].isVisible = true;
-            this.selectedIndex = index;
+            _modPanels[_selectedIndex].isVisible = false;
+            _modPanels[index].isVisible = true;
+            _selectedIndex = index;
 
-            var mainHelper = this.uIHelperBase as UIHelper;
+            var mainHelper = _uIHelperBase as UIHelper;
             var mainPanel = mainHelper.self as UIScrollablePanel;
         }
 
         public void BuildUi()
         {
-            var relevantSortedModNames = this.netInfoGroupViewReadModel.Where(x => x.PrefabFound).Select(x => x.ModName).Distinct().OrderBy(x => x).ToList();
+            var relevantSortedModNames = _netInfoGroupViewReadModel.Where(x => x.PrefabFound).Select(x => x.ModName).Distinct().OrderBy(x => x).ToList();
             if (relevantSortedModNames.Count == 0)
             {
-                var mainGroupUiHelper = this.uIHelperBase.AddGroup(this.modFullTitle) as UIHelper;
+                var mainGroupUiHelper = _uIHelperBase.AddGroup(_modFullTitle) as UIHelper;
 
                 var mainPanel = mainGroupUiHelper.self as UIPanel;
                 var mainLabel = mainPanel.AddUIComponent<UILabel>();
@@ -52,14 +52,14 @@ namespace RoadRemovalTool.Ui
                 return;
             }
 
-            this.modPanels = new UIPanel[relevantSortedModNames.Count];
+            _modPanels = new UIPanel[relevantSortedModNames.Count];
 
-            var mainHelper = this.uIHelperBase as UIHelper;
-            var mainGroupHelper = this.uIHelperBase.AddGroup(this.modFullTitle) as UIHelper;
+            var mainHelper = _uIHelperBase as UIHelper;
+            var mainGroupHelper = _uIHelperBase.AddGroup(_modFullTitle) as UIHelper;
             var mainGroupPanel = mainGroupHelper.self as UIPanel;
             mainGroupPanel.backgroundSprite = null;
 
-            var modDropDown = mainGroupHelper.AddDropdown("Mod", relevantSortedModNames.ToArray(), 0, (index) => this.ShowModPanel(index)) as UIDropDown;
+            var modDropDown = mainGroupHelper.AddDropdown("Mod", relevantSortedModNames.ToArray(), 0, (index) => ShowModPanel(index)) as UIDropDown;
             modDropDown.textFieldPadding = new RectOffset(8, 8, 8, 8);
             modDropDown.width = modDropDown.CalculatePopupWidth(0);
 
@@ -73,9 +73,9 @@ namespace RoadRemovalTool.Ui
                 modPanel.name = "RRT_UIPanel_" + relevantSortedModNames[i];
                 var modPanelHelper = new UIHelper(modPanel);
 
-                this.modPanels[i] = modPanel;
+                _modPanels[i] = modPanel;
 
-                var modNetInfoGroupViewReadModel = this.netInfoGroupViewReadModel
+                var modNetInfoGroupViewReadModel = _netInfoGroupViewReadModel
                     .Where(x => 
                         x.PrefabFound 
                         && x.ModName == relevantSortedModNames[i]
@@ -110,16 +110,20 @@ namespace RoadRemovalTool.Ui
 
                         var netInfoGroupHelper = new UIHelper(netInfoGroupPanel);
 
-                        var netGroupDemolishButton = netInfoGroupHelper.AddButton("Demolish", () => this.gameEngineService.DemolishSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                        var netGroupDemolishButton = netInfoGroupHelper.AddButton("Demolish", () => _gameEngineService.DemolishSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
                         netGroupDemolishButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
                         netGroupDemolishButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width, 0);
 
+                        var netGroupColorizeButton = netInfoGroupHelper.AddButton("Colorize", () => _gameEngineService.ColorizeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                        netGroupColorizeButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                        netGroupColorizeButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - 5f, 0);
+
                         if (netInfoGroupViewReadModel.HasAnyReplacements)
                         {
-                            var netGroupReplaceButton = netInfoGroupHelper.AddButton("Replace", () => this.gameEngineService.UpgradeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                            var netGroupReplaceButton = netInfoGroupHelper.AddButton("Replace", () => _gameEngineService.UpgradeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
                             netGroupReplaceButton.tooltip = "with " + netInfoGroupViewReadModel.DisplayNameReplacement;
                             netGroupReplaceButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
-                            netGroupReplaceButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupReplaceButton.width - 10, 0);
+                            netGroupReplaceButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - netGroupReplaceButton.width - 10f, 0);
                         }
                     }
 
@@ -129,7 +133,7 @@ namespace RoadRemovalTool.Ui
                 }
             }
 
-            this.ShowModPanel(0); //select first element
+            ShowModPanel(0); //select first element
         }
     }
 }

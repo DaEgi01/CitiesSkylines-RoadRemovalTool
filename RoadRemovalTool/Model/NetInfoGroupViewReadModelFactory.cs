@@ -8,7 +8,7 @@ namespace RoadRemovalTool.Model
 
         public NetInfoGroupViewReadModel Create(NetInfoGroup netInfoGroup)
         {
-            var displayNameOriginal = GetCachedDisplayName(netInfoGroup.SystemNameOriginal);            
+            var displayNameOriginal = GetCachedDisplayName(netInfoGroup.SystemNameOriginal);
             if (displayNameOriginal == null)
             {
                 return new NetInfoGroupViewReadModel(netInfoGroup, false);

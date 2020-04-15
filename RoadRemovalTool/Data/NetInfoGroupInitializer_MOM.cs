@@ -5,7 +5,7 @@ namespace RoadRemovalTool.Data
 {
     public class NetInfoGroupInitializer_MOM : INetInfoGroupInitializer
     {
-        public readonly string modName = "Metro Overhaul Mod";
+        public string ModName => "Metro Overhaul Mod";
 
         //TODO add demolish of metrostations or buildings in general
         
@@ -13,7 +13,7 @@ namespace RoadRemovalTool.Data
         {
             return new List<NetInfoGroup>()
             {
-                new NetInfoGroup(modName, RoadUiCategory.Metro, false, new List<NetInfoDemolishAndReplacementModel>() {
+                new NetInfoGroup(ModName, RoadUiCategory.Metro, false, new List<NetInfoDemolishAndReplacementModel>() {
                     new NetInfoDemolishAndReplacementModel("Metro Track Bridge"),
                     new NetInfoDemolishAndReplacementModel("Metro Track Bridge NoBar"),
                     new NetInfoDemolishAndReplacementModel("Metro Track Elevated"),
@@ -26,7 +26,7 @@ namespace RoadRemovalTool.Data
                     new NetInfoDemolishAndReplacementModel("Metro Station Track Sunken"),
                     new NetInfoDemolishAndReplacementModel("Metro Station Track Tunnel")
                 }),
-                new NetInfoGroup(modName, RoadUiCategory.Metro, false, new List<NetInfoDemolishAndReplacementModel>() {
+                new NetInfoGroup(ModName, RoadUiCategory.Metro, false, new List<NetInfoDemolishAndReplacementModel>() {
                     new NetInfoDemolishAndReplacementModel("Steel Metro Track Bridge"),
                     new NetInfoDemolishAndReplacementModel("Steel Metro Track Bridge NoBar"),
                     new NetInfoDemolishAndReplacementModel("Steel Metro Track Elevated"),
