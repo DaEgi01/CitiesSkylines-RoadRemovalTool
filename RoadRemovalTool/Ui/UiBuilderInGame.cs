@@ -33,24 +33,17 @@ namespace RoadRemovalTool.Ui
             _modPanels[_selectedIndex].isVisible = false;
             _modPanels[index].isVisible = true;
             _selectedIndex = index;
-
-            var mainHelper = _uIHelperBase as UIHelper;
-            var mainPanel = mainHelper.self as UIScrollablePanel;
         }
 
         public void BuildUi()
         {
-            var relevantSortedModNames = _netInfoGroupViewReadModel.Where(x => x.PrefabFound).Select(x => x.ModName).Distinct().OrderBy(x => x).ToList();
-            if (relevantSortedModNames.Count == 0)
-            {
-                var mainGroupUiHelper = _uIHelperBase.AddGroup(_modFullTitle) as UIHelper;
-
-                var mainPanel = mainGroupUiHelper.self as UIPanel;
-                var mainLabel = mainPanel.AddUIComponent<UILabel>();
-                mainLabel.text = "Did not find any roads that are supported.";
-
-                return;
-            }
+            var relevantSortedModNames = _netInfoGroupViewReadModel
+                .Where(x => x.PrefabFound)
+                .Select(x => x.ModName)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+            relevantSortedModNames.Add("Custom");
 
             _modPanels = new UIPanel[relevantSortedModNames.Count];
 
@@ -75,61 +68,89 @@ namespace RoadRemovalTool.Ui
 
                 _modPanels[i] = modPanel;
 
-                var modNetInfoGroupViewReadModel = _netInfoGroupViewReadModel
-                    .Where(x => 
-                        x.PrefabFound 
+                if (relevantSortedModNames[i] != "Custom")
+                {
+                    var modNetInfoGroupViewReadModel = _netInfoGroupViewReadModel
+                    .Where(x =>
+                        x.PrefabFound
                         && x.ModName == relevantSortedModNames[i]
                     );
 
-                var roadUiCategories = modNetInfoGroupViewReadModel.Select(x => x.RoadUiCategory).Distinct().OrderBy(x => x);
-                foreach (var roadUiCategory in roadUiCategories)
-                {
-                    var subGroupHelper = modPanelHelper.AddGroup(Enum.GetName(typeof(RoadUiCategory), roadUiCategory)) as UIHelper;
-                    var subGroupPanel = subGroupHelper.self as UIPanel;
-
-                    var offset = 10;
-                    var netInfoGroupPanelHeight = 48;
-
-                    var roadUiCategoryNetInfoGroupViewReadModels = modNetInfoGroupViewReadModel.Where(x => x.RoadUiCategory == roadUiCategory);
-                    foreach (var netInfoGroupViewReadModel in roadUiCategoryNetInfoGroupViewReadModels)
+                    var roadUiCategories = modNetInfoGroupViewReadModel.Select(x => x.RoadUiCategory).Distinct().OrderBy(x => x);
+                    foreach (var roadUiCategory in roadUiCategories)
                     {
-                        var netInfoGroupPanel = subGroupPanel.AddUIComponent<UIPanel>();
-                        netInfoGroupPanel.height = netInfoGroupPanelHeight;
-                        netInfoGroupPanel.width = subGroupPanel.width - 60;
-                        netInfoGroupPanel.relativePosition = new Vector3(0, offset);
-                        offset += netInfoGroupPanelHeight;
+                        var subGroupHelper = modPanelHelper.AddGroup(Enum.GetName(typeof(RoadUiCategory), roadUiCategory)) as UIHelper;
+                        var subGroupPanel = subGroupHelper.self as UIPanel;
 
-                        var label = netInfoGroupPanel.AddUIComponent<UILabel>();
-                        label.text = netInfoGroupViewReadModel.DisplayNameOriginal;
-                        label.relativePosition = new Vector3(0, 8);
-                        if (netInfoGroupViewReadModel.IsRedundant)
+                        var offset = 10;
+                        var netInfoGroupPanelHeight = 48;
+
+                        var roadUiCategoryNetInfoGroupViewReadModels = modNetInfoGroupViewReadModel.Where(x => x.RoadUiCategory == roadUiCategory);
+                        foreach (var netInfoGroupViewReadModel in roadUiCategoryNetInfoGroupViewReadModels)
                         {
-                            label.text += " (Redundant)";
-                            label.textColor = new Color32(200, 100, 100, 255);
+                            var netInfoGroupPanel = subGroupPanel.AddUIComponent<UIPanel>();
+                            netInfoGroupPanel.height = netInfoGroupPanelHeight;
+                            netInfoGroupPanel.width = subGroupPanel.width - 60;
+                            netInfoGroupPanel.relativePosition = new Vector3(0, offset);
+                            offset += netInfoGroupPanelHeight;
+
+                            var label = netInfoGroupPanel.AddUIComponent<UILabel>();
+                            label.text = netInfoGroupViewReadModel.DisplayNameOriginal;
+                            label.relativePosition = new Vector3(0, 8);
+                            if (netInfoGroupViewReadModel.IsRedundant)
+                            {
+                                label.text += " (Redundant)";
+                                label.textColor = new Color32(200, 100, 100, 255);
+                            }
+
+                            var netInfoGroupHelper = new UIHelper(netInfoGroupPanel);
+
+                            var netGroupDemolishButton = netInfoGroupHelper.AddButton("Demolish", () => _gameEngineService.DemolishSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                            netGroupDemolishButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                            netGroupDemolishButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width, 0);
+
+                            var netGroupColorizeButton = netInfoGroupHelper.AddButton("Colorize", () => _gameEngineService.ColorizeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                            netGroupColorizeButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                            netGroupColorizeButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - 5f, 0);
+
+                            if (netInfoGroupViewReadModel.HasAnyReplacements)
+                            {
+                                var netGroupReplaceButton = netInfoGroupHelper.AddButton("Replace", () => _gameEngineService.UpgradeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
+                                netGroupReplaceButton.tooltip = "with " + netInfoGroupViewReadModel.DisplayNameReplacement;
+                                netGroupReplaceButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                                netGroupReplaceButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - netGroupReplaceButton.width - 10f, 0);
+                            }
                         }
 
-                        var netInfoGroupHelper = new UIHelper(netInfoGroupPanel);
-
-                        var netGroupDemolishButton = netInfoGroupHelper.AddButton("Demolish", () => _gameEngineService.DemolishSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
-                        netGroupDemolishButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
-                        netGroupDemolishButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width, 0);
-
-                        var netGroupColorizeButton = netInfoGroupHelper.AddButton("Colorize", () => _gameEngineService.ColorizeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
-                        netGroupColorizeButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
-                        netGroupColorizeButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - 5f, 0);
-
-                        if (netInfoGroupViewReadModel.HasAnyReplacements)
-                        {
-                            var netGroupReplaceButton = netInfoGroupHelper.AddButton("Replace", () => _gameEngineService.UpgradeSegmentGroup(netInfoGroupViewReadModel)) as UIButton;
-                            netGroupReplaceButton.tooltip = "with " + netInfoGroupViewReadModel.DisplayNameReplacement;
-                            netGroupReplaceButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
-                            netGroupReplaceButton.relativePosition = new Vector3(netInfoGroupPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - netGroupReplaceButton.width - 10f, 0);
-                        }
+                        modPanel.autoFitChildrenVertically = true;
+                        modPanel.autoLayoutDirection = LayoutDirection.Vertical;
+                        modPanel.autoLayout = true;
                     }
+                }
+                else
+                {
+                    modPanel.autoLayout = false;
 
-                    modPanel.autoFitChildrenVertically = true;
-                    modPanel.autoLayoutDirection = LayoutDirection.Vertical;
-                    modPanel.autoLayout = true;
+                    var targetTextField = modPanelHelper.AddTextfield("Target", string.Empty, (value) => { }, (value) => { }) as UITextField;
+                    var targetTextFieldPanel = targetTextField.parent as UIPanel;
+                    targetTextFieldPanel.relativePosition = new Vector3(0f, 0f);
+
+                    var netGroupDemolishButton = modPanelHelper.AddButton("Demolish", () => _gameEngineService.DemolishSegment(targetTextField.text)) as UIButton;
+                    netGroupDemolishButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                    netGroupDemolishButton.relativePosition = new Vector3(modPanel.width - netGroupDemolishButton.width, 20f);
+
+                    var netGroupColorizeButton = modPanelHelper.AddButton("Colorize", () => _gameEngineService.ColorizeSegment(targetTextField.text)) as UIButton;
+                    netGroupColorizeButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                    netGroupColorizeButton.relativePosition = new Vector3(modPanel.width - netGroupDemolishButton.width - netGroupColorizeButton.width - 5f, 20f);
+
+                    var replacementTextField = modPanelHelper.AddTextfield("Replacement", string.Empty, (value) => { }, (value) => { }) as UITextField;
+                    var replacementTextFieldPanel = replacementTextField.parent as UIPanel;
+                    replacementTextFieldPanel.relativePosition = new Vector3(0f, 59f);
+
+                    var netGroupReplaceButton = modPanelHelper.AddButton("Replace", () => _gameEngineService.UpgradeSegment(targetTextField.text, replacementTextField.text)) as UIButton;
+                    netGroupReplaceButton.tooltip = "Replace Target with Replacement.";
+                    netGroupReplaceButton.textHorizontalAlignment = UIHorizontalAlignment.Center;
+                    netGroupReplaceButton.relativePosition = new Vector3(modPanel.width - netGroupReplaceButton.width, 79f);
                 }
             }
 

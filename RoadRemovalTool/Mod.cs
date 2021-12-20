@@ -1,5 +1,4 @@
 ﻿using ColossalFramework;
-using ColossalFramework.PlatformServices;
 using ICities;
 using RoadRemovalTool.Data;
 using RoadRemovalTool.Model;
@@ -15,7 +14,7 @@ namespace RoadRemovalTool
 
         public string Name => "Road Removal Tool";
         public string Description => "Automatically demolishes specific mod roads or replaces them with Colossal Order roads.";
-        public string Version => "1.1.0";
+        public string Version => "1.2.0";
 
         public override void OnCreated(ILoading loading)
         {
@@ -50,7 +49,9 @@ namespace RoadRemovalTool
                     .Concat(netInfoGroupsRoadsForNeExt2.Create());
 
                 var netInfoGroupViewReadModelFactory = new NetInfoGroupViewReadModelFactory();
-                var netInfoGroupViewReadModels = netInfoGroups.Select(x => netInfoGroupViewReadModelFactory.Create(x)).ToList();
+                var netInfoGroupViewReadModels = netInfoGroups
+                    .Select(x => netInfoGroupViewReadModelFactory.Create(x))
+                    .ToList();
 
                 uiBuilder = new UiBuilderInGame(helper, modFullTitle, gameEngineService, netInfoGroupViewReadModels);
             }

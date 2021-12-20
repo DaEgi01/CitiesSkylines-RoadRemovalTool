@@ -13,7 +13,7 @@ namespace RoadRemovalTool.Data
             _afterDarkDlcInstalled = afterDarkDlcInstalled;
             _inMotionDlcInstalled = inMotionDlcInstalled;
         }
-        
+
         public string ModName => "Network Extensions 2";
 
         public List<NetInfoGroup> Create()
